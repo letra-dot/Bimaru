@@ -3,99 +3,145 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#eaf1f9">
+<meta name="theme-color" content="#2b2b2b">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bimaru">
 <title>Bimaru</title>
 <style>
-  *{box-sizing:border-box}
-  :root{
-    --bg:#eaf1f9; --card:#fff;
-    --water:#d9e9f8; --water-line:#bcd6ef;
-    --sea:#bdd6ee; --ship:#16324f;
-    --ok:#12a150; --bad:#e5484d;
-    --text:#0f2436; --muted:#5b7186;
-  }
-  html,body{margin:0;padding:0}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
   body{
+    background:#2b2b2b;color:#e9e9e9;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:radial-gradient(120% 80% at 50% 0%,#f8fcff 0%,var(--bg) 55%,#dce8f5 100%);
-    color:var(--text); min-height:100dvh; overscroll-behavior:contain;
-    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 18px);
-    -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;
+    display:flex;flex-direction:column;min-height:100dvh;
+    padding:env(safe-area-inset-top) 0 calc(env(safe-area-inset-bottom) + 6px);
   }
-  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px 10px}
-  .bar__title{margin:0;font-size:20px;letter-spacing:.02em}
-  .bar__meta{margin:3px 0 0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-  .select{border:1px solid #cfdcea;background:#fff;color:var(--text);font-size:15px;font-weight:600;padding:9px 10px;border-radius:12px}
-  .wrap{max-width:440px;margin:0 auto;padding:0 14px}
+  .app{width:100%;max-width:480px;margin:0 auto;display:flex;flex-direction:column;flex:1;padding:0 14px}
+
+  /* ---------- Kopfzeile ---------- */
+  .top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px 4px}
+  .timer{display:flex;align-items:center;gap:8px;font-size:20px;font-variant-numeric:tabular-nums;color:#dcdcdc}
+  .timer svg{width:19px;height:19px;fill:none;stroke:#c8c8c8;stroke-width:1.9;stroke-linecap:round}
+  .top__actions{display:flex;align-items:center;gap:12px}
+  .ghost{appearance:none;border:0;background:none;color:#cfcfcf;font:inherit;font-size:16px;padding:6px 2px}
+  .ghost:active{opacity:.55}
+  .select{
+    appearance:none;-webkit-appearance:none;
+    background:#333;color:#dcdcdc;border:1px solid #4a4a4a;border-radius:9px;
+    font:inherit;font-size:14px;padding:7px 8px;
+  }
+
+  /* ---------- Flottenreihe ---------- */
+  .fleet{
+    display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+    gap:7px 16px;padding:8px 0 14px;--u:12px;min-height:46px;
+  }
+  .shape{height:var(--u);border-radius:99px;background:#787878;transition:background .2s,opacity .2s}
+  .shape.is-done{background:#3c3c3c}
+
+  /* ---------- Brett ---------- */
+  .stage{flex:1;display:flex;align-items:flex-start}
+  .gridwrap{
+    --cl:26px;width:100%;display:grid;
+    grid-template-columns:1fr var(--cl);
+    grid-template-rows:auto var(--cl);
+  }
   .board{
-    display:grid;grid-template-columns:22px repeat(var(--n,8),1fr);gap:2px;
-    background:var(--card);padding:8px;border-radius:18px;
-    box-shadow:0 12px 30px rgba(16,45,74,.10);touch-action:none;
+    position:relative;width:100%;aspect-ratio:1;display:grid;
+    background:#0a76dd;border:2px solid #f2f2f2;border-radius:14px;
+    overflow:hidden;touch-action:none;
   }
-  .label{display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
-  .label--corner{font-size:0}
-  .label.is-ok{color:var(--ok)}
-  .label.is-over{color:var(--bad)}
-  .cell{position:relative;aspect-ratio:1;border-radius:6px;background:var(--water);box-shadow:inset 0 0 0 1px var(--water-line);transition:background .08s ease}
-  .cell--sea{background:var(--sea);box-shadow:inset 0 0 0 1px #a9c6e2}
-  .cell--sea::after{content:"";position:absolute;left:50%;top:50%;width:5px;height:5px;border-radius:50%;background:#7395b5;transform:translate(-50%,-50%)}
-  .cell--clue{background:var(--sea);box-shadow:inset 0 0 0 1px #9cbbd8}
-  .cell--clue::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:6px;border-radius:2px;background:#6c8fb0;transform:translate(-50%,-50%)}
-  .cell--ship{background:linear-gradient(160deg,#26547c,#12304b);box-shadow:0 1px 2px rgba(9,29,46,.35),inset 0 1px 0 rgba(255,255,255,.18)}
-  .cell--bad{outline:2px solid var(--bad);outline-offset:-2px}
-  .fleet{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px}
-  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--muted);background:#fff;border:1px solid #dbe7f3;border-radius:10px;padding:5px 9px;font-variant-numeric:tabular-nums}
-  .chip__ship{display:inline-block;min-width:14px;text-align:center;padding:1px 5px;border-radius:4px;background:#12304b;color:#fff;font-size:11px}
-  .chip--ok{border-color:#b6e6c9;background:#f1fbf5;color:#0b7a3c}
-  .chip--over{border-color:#f5c2c4;background:#fff2f2;color:var(--bad)}
-  .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
-  .btn{appearance:none;-webkit-appearance:none;border:1px solid #d3e0ee;background:#fff;color:var(--text);font:inherit;font-size:15px;font-weight:600;padding:13px 10px;border-radius:14px;width:100%}
-  .btn:active{transform:scale(.975)}
-  .btn--primary{grid-column:1 / -1;background:linear-gradient(180deg,#2b7cc4,#1b5f9e);border-color:#1b5f9e;color:#fff}
-  .legend{margin:14px 2px 0;font-size:12px;line-height:1.5;color:var(--muted)}
-  .win{position:fixed;inset:0;display:grid;place-items:center;padding:24px;z-index:20;background:rgba(11,32,51,.45);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-  .win[hidden]{display:none}
-  .win__card{width:100%;max-width:320px;background:#fff;border-radius:22px;padding:22px;text-align:center;box-shadow:0 24px 60px rgba(8,28,45,.35)}
-  .win__kicker{margin:0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ok)}
-  .win__title{margin:6px 0 16px;font-size:21px}
-  .win__card .btn{grid-column:auto;margin-top:8px}
+  .cell{position:relative;box-shadow:inset 0 -1px 0 rgba(0,0,0,.17),inset -1px 0 0 rgba(0,0,0,.17)}
+  .cell--sea{background:#04509c}
+  .cell--bad{z-index:3;border-radius:9px;outline:2px solid #ff5252;outline-offset:-2px}
+
+  .ships{position:absolute;inset:0;pointer-events:none}
+  .pill{position:absolute;background:#fff;border-radius:99px}
+  .pill--bad{background:#fff;border-radius:50%;outline:2px solid #ff5252;outline-offset:-1px}
+
+  /* ---------- Hinweise ---------- */
+  .clues{
+    display:grid;color:#9a9a9a;font-size:15px;font-weight:500;
+    font-variant-numeric:tabular-nums;
+  }
+  .clues--right{grid-template-columns:1fr;justify-items:center;padding-left:9px}
+  .clues--bottom{grid-template-rows:1fr;justify-items:center;align-items:center;padding-top:8px}
+  .clues span{display:flex;align-items:center;justify-content:center;height:100%}
+  .clues span.is-ok{color:#5ee08a}
+  .clues span.is-over{color:#ff5252}
+
+  /* ---------- Fusszeile ---------- */
+  .actions{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 0 6px}
+  .undo{
+    appearance:none;-webkit-appearance:none;
+    width:56%;height:54px;border-radius:13px;
+    border:1px solid #4a4a4a;background:#303030;color:#9e9e9e;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .undo:active{background:#3a3a3a;transform:scale(.98)}
+  .undo svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .mini{
+    appearance:none;-webkit-appearance:none;
+    height:54px;padding:0 16px;border-radius:13px;
+    border:1px solid #4a4a4a;background:#303030;color:#cfcfcf;font:inherit;font-size:15px;
+  }
+  .mini:active{background:#3a3a3a}
+
+  /* ---------- Gewonnen ---------- */
+  .modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:24px;background:rgba(0,0,0,.6)}
+  .modal[hidden]{display:none}
+  .modal__card{width:100%;max-width:300px;background:#333;border:1px solid #4a4a4a;border-radius:20px;padding:22px;text-align:center}
+  .modal__kicker{margin:0 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#5ee08a}
+  .modal__title{margin:0 0 6px;font-size:20px;font-weight:600}
+  .modal__time{margin:0 0 18px;font-size:14px;color:#9a9a9a;font-variant-numeric:tabular-nums}
+  .modal .mini{width:100%;margin-top:8px;background:#0a76dd;border-color:#0a76dd;color:#fff}
 </style>
 </head>
 <body>
 
-<header class="bar">
-  <div>
-    <h1 class="bar__title">Bimaru</h1>
-    <p class="bar__meta"><span id="level">Level 1</span></p>
-  </div>
-  <select id="difficulty" class="select" aria-label="Schwierigkeit">
-    <option value="8">8 × 8</option>
-    <option value="10">10 × 10</option>
-  </select>
-</header>
+<div class="app">
+  <header class="top">
+    <div class="timer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      <span id="time">00:00</span>
+    </div>
+    <div class="top__actions">
+      <select id="size" class="select" aria-label="Grösse">
+        <option value="8">8 × 8</option>
+        <option value="10">10 × 10</option>
+      </select>
+      <button id="solve" class="ghost" type="button">Ergebnis</button>
+    </div>
+  </header>
 
-<main class="wrap">
-  <div class="board" id="board" aria-label="Spielfeld"></div>
   <div class="fleet" id="fleet" aria-label="Flotte"></div>
 
-  <div class="actions">
-    <button class="btn" id="undo" type="button">Zurück</button>
-    <button class="btn" id="clear" type="button">Leeren</button>
-    <button class="btn" id="solution" type="button">Lösung</button>
-    <button class="btn btn--primary" id="new" type="button">Neues Rätsel</button>
+  <div class="stage">
+    <div class="gridwrap">
+      <div class="board" id="board" aria-label="Spielfeld"></div>
+      <div class="clues clues--right" id="cluesR"></div>
+      <div class="clues clues--bottom" id="cluesB"></div>
+    </div>
   </div>
 
-  <p class="legend">Tippen: Schiff → Wasser → leer. Ziehen: mehrere Felder malen. Schiffe dürfen sich nicht berühren, auch nicht diagonal.</p>
-</main>
+  <div class="actions">
+    <button class="mini" id="clear" type="button">Leeren</button>
+    <button class="undo" id="undo" type="button" aria-label="Zug zurück">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h9a5 5 0 0 1 0 10h-2"/></svg>
+    </button>
+    <button class="mini" id="new" type="button">Neu</button>
+  </div>
+</div>
 
-<div class="win" id="win" hidden>
-  <div class="win__card">
-    <p class="win__kicker">Geschafft</p>
-    <h2 class="win__title" id="winText">Level 1 gelöst</h2>
-    <button class="btn btn--primary" id="next" type="button">Nächstes Level</button>
-    <button class="btn" id="close" type="button">Brett ansehen</button>
+<div class="modal" id="modal" hidden>
+  <div class="modal__card">
+    <p class="modal__kicker">Geschafft</p>
+    <h2 class="modal__title" id="modalTitle">Level 1 gelöst</h2>
+    <p class="modal__time" id="modalTime">00:00</p>
+    <button class="mini" id="next" type="button">Nächstes Rätsel</button>
+    <button class="mini" id="close" type="button">Brett ansehen</button>
   </div>
 </div>
 
@@ -105,24 +151,41 @@
 
   var CONFIG = {
     '8':  { n: 8,  ships: [3, 2, 2, 1, 1, 1], reveal: 0.30 },
-    '10': { n: 10, ships: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1], reveal: 0.10 }
+    '10': { n: 10, ships: [4, 3, 3, 2, 2, 2, 1, 1, 1, 1], reveal: 0.12 }
   };
-  var KEY = 'bimaru.v2';
+  var KEY = 'bimaru.v3';
 
   var boardEl = document.getElementById('board');
   var fleetEl = document.getElementById('fleet');
-  var levelEl = document.getElementById('level');
-  var diffEl  = document.getElementById('difficulty');
-  var winEl   = document.getElementById('win');
-  var winText = document.getElementById('winText');
+  var cluesR  = document.getElementById('cluesR');
+  var cluesB  = document.getElementById('cluesB');
+  var timeEl  = document.getElementById('time');
+  var sizeEl  = document.getElementById('size');
+  var modalEl = document.getElementById('modal');
+  var modalTitle = document.getElementById('modalTitle');
+  var modalTime  = document.getElementById('modalTime');
 
   var S = null;
   var history = [];
   var pending = null;
   var drag = null;
-  var cellEls = [], rowEls = [], colEls = [];
+  var cells = [], rowEls = [], colEls = [], shipLayer = null;
+  var timerId = null, elapsed = 0, startAt = 0;
 
   function rnd(n) { return Math.floor(Math.random() * n); }
+  function fmt(s) {
+    var m = Math.floor(s / 60), r = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function startTimer() {
+    stopTimer();
+    startAt = Date.now(); elapsed = 0; timeEl.textContent = '00:00';
+    timerId = setInterval(function () {
+      elapsed = Math.floor((Date.now() - startAt) / 1000);
+      timeEl.textContent = fmt(elapsed);
+    }, 500);
+  }
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
 
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
@@ -131,17 +194,17 @@
     return a;
   }
 
-  function fits(grid, n, cells) {
-    var own = new Set(cells);
-    for (var k = 0; k < cells.length; k++) {
-      var idx = cells[k];
-      var r = (idx / n) | 0, c = idx % n;
+  function fits(grid, n, list) {
+    var own = {};
+    for (var i = 0; i < list.length; i++) own[list[i]] = 1;
+    for (var k = 0; k < list.length; k++) {
+      var idx = list[k], r = (idx / n) | 0, c = idx % n;
       for (var dr = -1; dr <= 1; dr++) {
         for (var dc = -1; dc <= 1; dc++) {
           var rr = r + dr, cc = c + dc;
           if (rr < 0 || cc < 0 || rr >= n || cc >= n) continue;
           var j = rr * n + cc;
-          if (own.has(j)) continue;
+          if (own[j]) continue;
           if (grid[j]) return false;
         }
       }
@@ -151,18 +214,17 @@
 
   function makeSolution(n, ships) {
     var order = ships.slice().sort(function (a, b) { return b - a; });
-    for (var attempt = 0; attempt < 1000; attempt++) {
+    for (var attempt = 0; attempt < 800; attempt++) {
       var grid = new Uint8Array(n * n), ok = true;
       for (var i = 0; i < order.length && ok; i++) {
         var len = order[i], placed = false;
-        for (var t = 0; t < 600; t++) {
-          var horiz = Math.random() < 0.5, r, c;
+        for (var t = 0; t < 500; t++) {
+          var horiz = Math.random() < 0.5, r, c, k, list = [];
           if (horiz) { r = rnd(n); c = rnd(n - len + 1); }
           else { r = rnd(n - len + 1); c = rnd(n); }
-          var cells = [];
-          for (var k = 0; k < len; k++) cells.push(horiz ? r * n + c + k : (r + k) * n + c);
-          if (fits(grid, n, cells)) {
-            for (var m = 0; m < cells.length; m++) grid[cells[m]] = 1;
+          for (k = 0; k < len; k++) list.push(horiz ? r * n + c + k : (r + k) * n + c);
+          if (fits(grid, n, list)) {
+            for (k = 0; k < len; k++) grid[list[k]] = 1;
             placed = true;
             break;
           }
@@ -178,11 +240,10 @@
     var n = S.n, u = S.user, seen = new Uint8Array(n * n), out = [];
     for (var i = 0; i < n * n; i++) {
       if (u[i] !== 1 || seen[i]) continue;
-      var stack = [i], cells = [];
+      var stack = [i], list = [];
       seen[i] = 1;
       while (stack.length) {
-        var j = stack.pop();
-        cells.push(j);
+        var j = stack.pop(); list.push(j);
         var r = (j / n) | 0, c = j % n;
         var nb = [[1, 0], [-1, 0], [0, 1], [0, -1]];
         for (var k = 0; k < 4; k++) {
@@ -192,39 +253,45 @@
           if (u[q] === 1 && !seen[q]) { seen[q] = 1; stack.push(q); }
         }
       }
-      var rows = new Set(), cols = new Set();
-      for (var z = 0; z < cells.length; z++) {
-        rows.add((cells[z] / n) | 0);
-        cols.add(cells[z] % n);
+      var rows = {}, cols = {}, rn = 0, cn = 0, z;
+      for (z = 0; z < list.length; z++) {
+        var rr2 = (list[z] / n) | 0, cc2 = list[z] % n;
+        if (!rows[rr2]) { rows[rr2] = 1; rn++; }
+        if (!cols[cc2]) { cols[cc2] = 1; cn++; }
       }
-      out.push({ len: cells.length, cells: cells, straight: rows.size === 1 || cols.size === 1 });
+      out.push({
+        len: list.length,
+        cells: list.sort(function (a, b) { return a - b; }),
+        straight: rn === 1 || cn === 1,
+        vertical: cn === 1
+      });
     }
     return out;
   }
 
-  function computeBad() {
-    var n = S.n, u = S.user, bad = new Set(), r, c;
+  function badCells() {
+    var n = S.n, u = S.user, bad = {}, r, c;
     for (r = 0; r < n; r++) {
       for (c = 0; c < n; c++) {
         if (u[r * n + c] !== 1) continue;
         if (r + 1 < n && c + 1 < n && u[(r + 1) * n + c + 1] === 1) {
-          bad.add(r * n + c); bad.add((r + 1) * n + c + 1);
+          bad[r * n + c] = 1; bad[(r + 1) * n + c + 1] = 1;
         }
         if (r + 1 < n && c - 1 >= 0 && u[(r + 1) * n + c - 1] === 1) {
-          bad.add(r * n + c); bad.add((r + 1) * n + c - 1);
+          bad[r * n + c] = 1; bad[(r + 1) * n + c - 1] = 1;
         }
       }
     }
     var comps = components();
     for (var i = 0; i < comps.length; i++) {
       if (!comps[i].straight) {
-        for (var k = 0; k < comps[i].cells.length; k++) bad.add(comps[i].cells[k]);
+        for (var k = 0; k < comps[i].cells.length; k++) bad[comps[i].cells[k]] = 1;
       }
     }
     return bad;
   }
 
-  function checkWin() {
+  function isSolved() {
     var n = S.n, u = S.user, r, c, s, i;
     for (r = 0; r < n; r++) {
       s = 0;
@@ -236,161 +303,216 @@
       for (r = 0; r < n; r++) if (u[r * n + c] === 1) s++;
       if (s !== S.col[c]) return false;
     }
-    var comps = components(), req = {}, got = {};
+    var comps = components(), got = {}, need = {};
     for (i = 0; i < comps.length; i++) {
       if (!comps[i].straight) return false;
       got[comps[i].len] = (got[comps[i].len] || 0) + 1;
     }
-    for (i = 0; i < S.ships.length; i++) req[S.ships[i]] = (req[S.ships[i]] || 0) + 1;
-    for (var k in req) if (got[k] !== req[k]) return false;
-    for (var g in got) if (!req[g]) return false;
-    return computeBad().size === 0;
+    for (i = 0; i < S.ships.length; i++) need[S.ships[i]] = (need[S.ships[i]] || 0) + 1;
+    for (var k in need) if (got[k] !== need[k]) return false;
+    for (var g in got) if (!need[g]) return false;
+    for (var b in badCells()) return false;
+    return true;
   }
 
-  function newGame(nKey, keepLevel) {
-    var cfg = CONFIG[nKey];
+  /* ---------------- Aufbau ---------------- */
+
+  function newGame(key, advance) {
+    var cfg = CONFIG[key];
     var grid = makeSolution(cfg.n, cfg.ships);
     if (!grid) return;
-    var n = cfg.n, row = new Array(n).fill(0), col = new Array(n).fill(0), i;
-    for (i = 0; i < n * n; i++) if (grid[i]) { row[(i / n) | 0]++; col[i % n]++; }
-
+    var n = cfg.n, row = [], col = [], i, j;
+    for (i = 0; i < n; i++) { row.push(0); col.push(0); }
+    for (i = 0; i < n * n; i++) {
+      if (grid[i]) { row[(i / n) | 0]++; col[i % n]++; }
+    }
     var sea = [];
     for (i = 0; i < n * n; i++) if (!grid[i]) sea.push(i);
     shuffle(sea);
-    var revealed = new Set(sea.slice(0, Math.round(sea.length * cfg.reveal)));
-    var user = new Uint8Array(n * n);
-    revealed.forEach(function (idx) { user[idx] = 2; });
+    var revealed = {};
+    var take = Math.round(sea.length * cfg.reveal);
+    for (j = 0; j < take; j++) revealed[sea[j]] = 1;
 
-    var nextLevel = (keepLevel && S) ? S.level + 1 : 1;
+    var user = new Uint8Array(n * n);
+    for (var key2 in revealed) user[key2 | 0] = 2;
+
     S = {
       n: n,
       ships: cfg.ships.slice().sort(function (a, b) { return b - a; }),
-      solution: grid, row: row, col: col,
-      revealed: revealed, user: user,
-      level: nextLevel, cheated: false, won: false
+      solution: grid,
+      row: row, col: col,
+      revealed: revealed,
+      user: user,
+      level: (advance && S) ? S.level + 1 : 1,
+      solved: false, cheated: false
     };
+
     history = []; pending = null; drag = null;
-    winEl.hidden = true;
-    buildBoard();
-    update();
+    modalEl.hidden = true;
+    build();
+    render();
+    startTimer();
     save();
   }
 
-  function buildBoard() {
+  function build() {
     var n = S.n, r, c;
-    boardEl.style.setProperty('--n', n);
     boardEl.innerHTML = '';
-    cellEls = []; rowEls = []; colEls = [];
-
-    var corner = document.createElement('div');
-    corner.className = 'label label--corner';
-    boardEl.appendChild(corner);
-
-    for (c = 0; c < n; c++) {
-      var cl = document.createElement('div');
-      cl.className = 'label label--col';
-      cl.textContent = S.col[c];
-      boardEl.appendChild(cl);
-      colEls.push(cl);
-    }
+    boardEl.style.gridTemplateColumns = 'repeat(' + n + ',1fr)';
+    boardEl.style.gridTemplateRows = 'repeat(' + n + ',1fr)';
+    cells = []; rowEls = []; colEls = [];
 
     for (r = 0; r < n; r++) {
-      var rl = document.createElement('div');
-      rl.className = 'label label--row';
-      rl.textContent = S.row[r];
-      boardEl.appendChild(rl);
-      rowEls.push(rl);
-
       for (c = 0; c < n; c++) {
         var cell = document.createElement('div');
         cell.className = 'cell';
         cell.dataset.i = String(r * n + c);
         boardEl.appendChild(cell);
-        cellEls[r * n + c] = cell;
+        cells[r * n + c] = cell;
       }
+    }
+    shipLayer = document.createElement('div');
+    shipLayer.className = 'ships';
+    boardEl.appendChild(shipLayer);
+
+    cluesR.innerHTML = '';
+    cluesB.innerHTML = '';
+    cluesR.style.gridTemplateRows = 'repeat(' + n + ',1fr)';
+    cluesB.style.gridTemplateColumns = 'repeat(' + n + ',1fr)';
+    for (r = 0; r < n; r++) {
+      var a = document.createElement('span');
+      cluesR.appendChild(a);
+      rowEls.push(a);
+    }
+    for (c = 0; c < n; c++) {
+      var b = document.createElement('span');
+      cluesB.appendChild(b);
+      colEls.push(b);
     }
   }
 
   function renderFleet() {
-    var comps = components(), placed = {}, req = {}, i;
+    var comps = components(), placed = {}, need = {}, i, html = '';
     for (i = 0; i < comps.length; i++) {
       if (comps[i].straight) placed[comps[i].len] = (placed[comps[i].len] || 0) + 1;
     }
-    for (i = 0; i < S.ships.length; i++) req[S.ships[i]] = (req[S.ships[i]] || 0) + 1;
+    for (i = 0; i < S.ships.length; i++) need[S.ships[i]] = (need[S.ships[i]] || 0) + 1;
 
-    var lens = Object.keys(req).map(Number).sort(function (a, b) { return b - a; });
-    var html = '';
+    var lens = [];
+    for (var k in need) lens.push(Number(k));
+    lens.sort(function (a, b) { return b - a; });
+
     for (i = 0; i < lens.length; i++) {
-      var l = lens[i], p = placed[l] || 0, rq = req[l];
-      var cls = p === rq ? 'chip chip--ok' : (p > rq ? 'chip chip--over' : 'chip');
-      html += '<span class="' + cls + '"><span class="chip__ship">' + l + '</span>' + p + '/' + rq + '</span>';
+      var L = lens[i], done = placed[L] || 0;
+      for (var q = 0; q < need[L]; q++) {
+        var cls = 'shape' + (q < done ? ' is-done' : '');
+        html += '<span class="' + cls + '" style="width:calc(var(--u) * ' + L + ')"></span>';
+      }
     }
     fleetEl.innerHTML = html;
   }
 
-  function update() {
-    var n = S.n, bad = computeBad(), i, r, c, s;
+  function renderShips() {
+    var n = S.n, comps = components(), html = '', i;
+    for (i = 0; i < comps.length; i++) {
+      var comp = comps[i];
+      if (comp.straight) {
+        var list = comp.cells;
+        var first = list[0], last = list[list.length - 1];
+        var r0 = (first / n) | 0, c0 = first % n;
+        var r1 = (last / n) | 0, c1 = last % n;
+        var top, left, w, h, p = 0.055;
+        if (r1 !== r0) {
+          var minR = Math.min(r0, r1);
+          left = ((c0 + p) / n) * 100;
+          w = ((1 - 2 * p) / n) * 100;
+          top = ((minR + p) / n) * 100;
+          h = ((comp.len - 2 * p) / n) * 100;
+        } else {
+          var minC = Math.min(c0, c1);
+          top = ((r0 + p) / n) * 100;
+          h = ((1 - 2 * p) / n) * 100;
+          left = ((minC + p) / n) * 100;
+          w = ((comp.len - 2 * p) / n) * 100;
+        }
+        html += '<div class="pill" style="left:' + left + '%;top:' + top + '%;width:' + w + '%;height:' + h + '%"></div>';
+      } else {
+        for (var k = 0; k < comp.cells.length; k++) {
+          var idx = comp.cells[k], rr = (idx / n) | 0, cc = idx % n, q = 0.07;
+          html += '<div class="pill pill--bad" style="left:' + (((cc + q) / n) * 100) + '%;top:' + (((rr + q) / n) * 100) +
+                  '%;width:' + (((1 - 2 * q) / n) * 100) + '%;height:' + (((1 - 2 * q) / n) * 100) + '%"></div>';
+        }
+      }
+    }
+    shipLayer.innerHTML = html;
+  }
+
+  function render() {
+    var n = S.n, bad = badCells(), i, r, c, s;
 
     for (i = 0; i < n * n; i++) {
       var cls = 'cell';
-      if (S.revealed.has(i)) cls += ' cell--clue';
-      else if (S.user[i] === 1) cls += ' cell--ship';
-      else if (S.user[i] === 2) cls += ' cell--sea';
-      if (bad.has(i)) cls += ' cell--bad';
-      cellEls[i].className = cls;
+      if (S.user[i] === 2) cls += ' cell--sea';
+      if (bad[i]) cls += ' cell--bad';
+      cells[i].className = cls;
     }
 
     for (r = 0; r < n; r++) {
       s = 0;
       for (c = 0; c < n; c++) if (S.user[r * n + c] === 1) s++;
       rowEls[r].textContent = S.row[r];
-      rowEls[r].className = 'label label--row' + (s === S.row[r] ? ' is-ok' : (s > S.row[r] ? ' is-over' : ''));
+      rowEls[r].className = s === S.row[r] ? 'is-ok' : (s > S.row[r] ? 'is-over' : '');
     }
     for (c = 0; c < n; c++) {
       s = 0;
       for (r = 0; r < n; r++) if (S.user[r * n + c] === 1) s++;
       colEls[c].textContent = S.col[c];
-      colEls[c].className = 'label label--col' + (s === S.col[c] ? ' is-ok' : (s > S.col[c] ? ' is-over' : ''));
+      colEls[c].className = s === S.col[c] ? 'is-ok' : (s > S.col[c] ? 'is-over' : '');
     }
 
+    renderShips();
     renderFleet();
-    levelEl.textContent = 'Level ' + S.level + ' · ' + n + ' × ' + n;
 
-    if (!S.won && !S.cheated && checkWin()) {
-      S.won = true;
-      winText.textContent = 'Level ' + S.level + ' gelöst';
-      winEl.hidden = false;
+    if (!S.solved && !S.cheated && isSolved()) {
+      S.solved = true;
+      stopTimer();
+      modalTitle.textContent = 'Rätsel ' + S.level + ' gelöst';
+      modalTime.textContent = 'Zeit ' + fmt(elapsed);
+      modalEl.hidden = false;
       save();
     }
   }
 
+  /* ---------------- Eingabe ---------------- */
+
   function commit() {
     if (pending && pending.length) {
       history.push(pending);
-      if (history.length > 80) history.shift();
+      if (history.length > 100) history.shift();
       save();
     }
     pending = null;
   }
 
-  function setCell(idx, val) {
-    if (S.revealed.has(idx)) return;
+  function paint(idx, val) {
+    if (S.revealed[idx]) return;
     if (S.user[idx] === val) return;
-    pending.push({ idx: idx, prev: S.user[idx] });
+    pending.push({ i: idx, v: S.user[idx] });
     S.user[idx] = val;
   }
 
   boardEl.addEventListener('pointerdown', function (e) {
-    var cell = e.target.closest('.cell');
-    if (!cell || !S) return;
-    var idx = Number(cell.dataset.i);
-    if (S.revealed.has(idx)) return;
+    if (!S) return;
+    var el = e.target.closest ? e.target.closest('.cell') : null;
+    if (!el) return;
+    var idx = Number(el.dataset.i);
+    if (S.revealed[idx]) return;
     e.preventDefault();
     pending = [];
     drag = {
       anchor: idx, prev: S.user[idx],
       val: S.user[idx] === 2 ? 2 : 1,
-      moved: false, pt: { x: e.clientX, y: e.clientY }
+      moved: false, x: e.clientX, y: e.clientY
     };
     try { boardEl.setPointerCapture(e.pointerId); } catch (err) {}
   });
@@ -398,90 +520,83 @@
   boardEl.addEventListener('pointermove', function (e) {
     if (!drag) return;
     if (!drag.moved) {
-      var dx = e.clientX - drag.pt.x, dy = e.clientY - drag.pt.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 8) return;
+      var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 9) return;
       drag.moved = true;
-      setCell(drag.anchor, drag.val);
-      update();
+      paint(drag.anchor, drag.val);
+      render();
     }
     var el = document.elementFromPoint(e.clientX, e.clientY);
     var cell = el && el.closest ? el.closest('.cell') : null;
     if (!cell) return;
     var idx = Number(cell.dataset.i);
-    if (S.revealed.has(idx)) return;
-    if (S.user[idx] !== drag.val) { setCell(idx, drag.val); update(); }
+    if (S.user[idx] !== drag.val) { paint(idx, drag.val); render(); }
   });
 
   boardEl.addEventListener('pointerup', function (e) {
     if (!drag) return;
-    if (!drag.moved) setCell(drag.anchor, (drag.prev + 1) % 3);
+    if (!drag.moved) paint(drag.anchor, (drag.prev + 1) % 3);
     drag = null;
     commit();
-    update();
+    render();
     try { boardEl.releasePointerCapture(e.pointerId); } catch (err) {}
   });
 
   boardEl.addEventListener('pointercancel', function () {
-    drag = null; pending = null; update();
+    drag = null; pending = null; render();
   });
 
   document.getElementById('undo').addEventListener('click', function () {
     var last = history.pop();
     if (!last) return;
-    for (var i = last.length - 1; i >= 0; i--) S.user[last[i].idx] = last[i].prev;
-    save(); update();
+    for (var i = last.length - 1; i >= 0; i--) S.user[last[i].i] = last[i].v;
+    save(); render();
   });
 
   document.getElementById('clear').addEventListener('click', function () {
-    var bucket = [];
-    for (var i = 0; i < S.n * S.n; i++) {
-      if (S.revealed.has(i)) continue;
-      if (S.user[i] !== 0) { bucket.push({ idx: i, prev: S.user[i] }); S.user[i] = 0; }
+    var bucket = [], i;
+    for (i = 0; i < S.n * S.n; i++) {
+      if (S.revealed[i]) continue;
+      if (S.user[i] !== 0) { bucket.push({ i: i, v: S.user[i] }); S.user[i] = 0; }
     }
     if (!bucket.length) return;
     history.push(bucket);
-    save(); update();
+    save(); render();
   });
 
-  document.getElementById('solution').addEventListener('click', function () {
-    if (!window.confirm('Lösung einblenden? Das Level zählt dann nicht.')) return;
-    var bucket = [];
-    for (var i = 0; i < S.n * S.n; i++) {
-      if (S.revealed.has(i)) continue;
-      var v = S.solution[i] ? 1 : 2;
-      if (S.user[i] !== v) { bucket.push({ idx: i, prev: S.user[i] }); S.user[i] = v; }
+  document.getElementById('solve').addEventListener('click', function () {
+    if (!window.confirm('Ergebnis einblenden? Das Rätsel gilt dann als gelöst-Hilfe.')) return;
+    var bucket = [], i, v;
+    for (i = 0; i < S.n * S.n; i++) {
+      if (S.revealed[i]) continue;
+      v = S.solution[i] ? 1 : 2;
+      if (S.user[i] !== v) { bucket.push({ i: i, v: S.user[i] }); S.user[i] = v; }
     }
     S.cheated = true;
     if (bucket.length) history.push(bucket);
-    save(); update();
+    save(); render();
   });
 
-  document.getElementById('new').addEventListener('click', function () {
-    newGame(diffEl.value, false);
-  });
+  document.getElementById('new').addEventListener('click', function () { newGame(sizeEl.value, false); });
+  sizeEl.addEventListener('change', function () { newGame(sizeEl.value, false); });
+  document.getElementById('next').addEventListener('click', function () { newGame(sizeEl.value, true); });
+  document.getElementById('close').addEventListener('click', function () { modalEl.hidden = true; });
 
-  diffEl.addEventListener('change', function () {
-    newGame(diffEl.value, false);
-  });
-
-  document.getElementById('next').addEventListener('click', function () {
-    newGame(diffEl.value, true);
-  });
-
-  document.getElementById('close').addEventListener('click', function () {
-    winEl.hidden = true;
-  });
+  /* ---------------- Speichern ---------------- */
 
   function save() {
     if (!S) return;
     try {
+      var rev = [], i;
+      for (i = 0; i < S.n * S.n; i++) if (S.revealed[i]) rev.push(i);
       localStorage.setItem(KEY, JSON.stringify({
         n: S.n, ships: S.ships,
         solution: Array.from(S.solution),
         row: S.row, col: S.col,
-        revealed: Array.from(S.revealed),
+        revealed: rev,
         user: Array.from(S.user),
-        level: S.level, cheated: S.cheated, won: S.won
+        level: S.level, solved: S.solved, cheated: S.cheated,
+        elapsed: elapsed
       }));
     } catch (err) {}
   }
@@ -495,19 +610,24 @@
       var n = d.n;
       if (!Array.isArray(d.solution) || d.solution.length !== n * n) return false;
       if (!Array.isArray(d.user) || d.user.length !== n * n) return false;
+
+      var rev = {};
+      for (var i = 0; i < d.revealed.length; i++) rev[d.revealed[i]] = 1;
+
       S = {
         n: n, ships: d.ships,
         solution: Uint8Array.from(d.solution),
         row: d.row, col: d.col,
-        revealed: new Set(d.revealed),
+        revealed: rev,
         user: Uint8Array.from(d.user),
         level: d.level || 1,
-        cheated: !!d.cheated, won: !!d.won
+        solved: !!d.solved, cheated: !!d.cheated
       };
-      diffEl.value = String(n);
+      sizeEl.value = String(n);
       history = [];
-      buildBoard();
-      update();
+      build();
+      render();
+      startTimer();
       return true;
     } catch (err) { return false; }
   }
